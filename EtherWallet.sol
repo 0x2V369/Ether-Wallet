@@ -14,7 +14,7 @@ contract EtherWallet{
 
     event EtherReceived(address indexed sender, uint amount, uint timestamp);
     event FallbackCalled(address indexed sender, uint amount, bytes data, uint timestamp);
-    event EtherWithdrawn(address indexed owner, uint amount, uint timestamp);
+    event EtherWithdrawn(address indexed to, uint amount, uint timestamp);
 
     /**
      * @dev Returns the balance of Ether stored in the contract.
@@ -24,17 +24,33 @@ contract EtherWallet{
     }
 
     /**
-     * @dev Withdraws a specified amount of Ether from the contract.
+     * @dev Withdraws a specified amount of Ether from the contract to a specified address
      * Can only be called by the contract owner.
      * @param _amount The amount of Ether to withdraw.
+     * @param _to The address to which the funds are sent
      */
-    function withdrawFunds(uint256 _amount) external {
+    function withdrawFunds(uint256 _amount, address payable _to) external {
         require(msg.sender == owner, "Only the contract owner can withdraw funds");
         require(_amount <= address(this).balance, "Insufficient funds");
 
         emit EtherWithdrawn(owner, _amount, block.timestamp);
-        owner.transfer(_amount);
+        _to.transfer(_amount);
     }
+
+    /**
+     * @dev Withdraws all the Ether available in the contract to a specific address
+     * Can only be called by the contract owner.
+     * @param _to the address to
+     */
+    function withdrawAll(address payable _to) external{
+        require(msg.sender == owner, "Only the contract owner can withdraw funds");
+        
+        uint256 totalAmount = address(this).balance;
+
+        emit EtherWithdrawn(msg.sender, totalAmount, block.timestamp);
+        _to.transfer(totalAmount);
+    }
+
 
     /**
      * @dev Receives Ether when sent to the contract.
